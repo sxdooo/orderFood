@@ -1,0 +1,81 @@
+---
+description: "React 核心编码规范：组件结构、命名、Hooks 使用、样式、状态管理等。适用于所有 React 组件文件。"
+globs:
+  - "src/**/*.tsx"
+  - "src/**/*.jsx"
+alwaysApply: false
+---
+
+# React 核心规范
+
+专注于 React 组件开发。
+
+## 组件定义
+
+- 函数组件优先，禁止使用类组件（除非不得不使用 `componentDidCatch`）。
+- 组件名称使用**大驼峰**（PascalCase），文件名称与组件名称保持一致。
+  - ✅ `UserProfile.tsx` 导出 `UserProfile`
+  - ❌ `userProfile.tsx`
+- 组件导出使用**命名导出**，避免默认导出（便于重构和代码分析）。
+
+## Props 类型定义
+
+- 使用 `interface` 定义 Props，而非 `type`（`interface` 可扩展，更适合对象）。
+- 必须为所有 Props 定义精确类型，禁止使用 `any`。
+- 可选 Props 使用 `?` 标记，并提供明确的默认值。
+
+## hooks规范
+- 仅在函数组件或自定义 Hook 中调用 Hooks。
+- 严格遵循依赖数组规则：
+- useEffect、useCallback、useMemo 的依赖数组必须包含所有反应式值（props、state、上下文中的值）。
+- 避免依赖数组遗漏导致状态过期。
+- 自定义 Hook 以 use 开头，封装可复用逻辑。
+
+## 状态管理
+- 优先使用局部状态（useState），仅当多个组件共享时才提升至全局状态（Context / Redux）。
+- 避免过度使用 Context 传递大量频繁变化的数据（会导致不必要的重渲染）。
+- 全局状态按照领域模块划分（如 userSlice、cartSlice），使用 Redux Toolkit。
+
+## 样式方案
+- 采用 Tailwind CSS（默认），组件文件内不再编写独立 CSS 文件。
+- 自定义样式使用 CSS Modules（*.module.css），命名采用小驼峰。
+- 禁止使用内联 style 属性（性能差，难以维护）。
+
+## 事件处理
+- 事件处理函数命名：handle + 事件名（如 handleClick、handleInputChange）。
+- 传递给子组件的回调函数必须以 on 为前缀（如 onClick、onChange）。
+
+## 条件渲染
+- 优先使用三元运算符或逻辑 &&，复杂条件抽离为变量。
+- 禁止在 JSX 内编写过多逻辑（应抽离成子组件或计算属性）。
+
+## 列表渲染
+- 始终提供 key 属性，key 使用唯一且稳定的标识符（通常是 ID），禁止使用数组索引作为 key。
+- key 属性应放在 <React.Fragment> 或组件上。
+
+## 性能基础
+- 默认使用 React.memo 包装大型组件。
+- useCallback / useMemo 用于成本较高的计算或传递给子组件的回调。
+
+## 测试相关
+- 每个组件至少包含一个简单的快照测试或渲染测试。
+- 交互逻辑使用 @testing-library/react 的 fireEvent / userEvent 覆盖。
+
+## 代码风格
+使用 ESLint @typescript-eslint 规则集：
+- @typescript-eslint/explicit-function-return-type：函数返回类型显式声明（配置为警告）。
+
+- @typescript-eslint/no-unused-vars：不允许声明未使用的变量。
+
+```typescript
+// ✅ 良好实践
+interface ButtonProps {
+  children: React.ReactNode;
+  variant?: 'primary' | 'secondary';
+  onClick: () => void;
+}
+
+export function Button({ children, variant = 'primary', onClick }: ButtonProps) {
+  // ...
+}
+

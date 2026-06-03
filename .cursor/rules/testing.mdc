@@ -1,0 +1,42 @@
+---
+description: "单元测试、集成测试、组件测试的编写规范，覆盖 Jest + React Testing Library。"
+globs:
+  - "**/__tests__/**"
+  - "**/*.test.{ts,tsx}"
+  - "**/*.spec.{ts,tsx}"
+alwaysApply: false
+---
+
+# 测试规范
+
+确保代码质量的强制性标准。所有核心功能和公共 API 必须有测试覆盖。
+
+## 测试框架
+
+- **单元测试 / 组件测试**：Jest + React Testing Library
+- **端到端测试**：Playwright（关键用户路径）
+- **快照测试**：谨慎使用（仅用于稳定且极少变化的组件）
+
+## 测试文件组织
+
+### 文件位置
+
+测试文件与源文件同目录，命名为 `<filename>.test.tsx`，或集中存放在 `__tests__` 目录下。
+
+### 测试套件结构
+
+使用 `describe` 对相关测试用例分组，嵌套深度不超过 3 层。
+
+```typescript
+describe('ComponentName', () => {
+  describe('rendering', () => {
+    it('should render with default props', () => {});
+    it('should render with custom className', () => {});
+  });
+
+  describe('interactions', () => {
+    it('should call onClick when clicked', () => {});
+    it('should not call onClick when disabled', () => {});
+  });
+});
+

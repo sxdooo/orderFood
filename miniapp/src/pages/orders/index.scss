@@ -1,0 +1,65 @@
+.orders-page {
+  padding-bottom: 40px;
+}
+
+.seller-tip {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  background: #e6f4ff;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  font-size: 26px;
+  color: #1677ff;
+
+  .seller-tip-link {
+    font-size: 26px;
+    font-weight: 500;
+    color: #1677ff;
+  }
+}
+
+.order-card {
+  cursor: pointer;
+
+  .order-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+
+  .order-date {
+    font-size: 28px;
+    font-weight: 600;
+    color: #1a1a1a;
+  }
+
+  .order-buyer {
+    font-size: 26px;
+    color: #555;
+    margin-bottom: 10px;
+    display: block;
+  }
+
+  .order-foot {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #f0f0f0;
+  }
+
+  .order-no {
+    font-size: 24px;
+    color: #bbb;
+  }
+
+  .order-amount {
+    font-size: 32px;
+    font-weight: 700;
+    color: #ff6b35;
+  }
+}

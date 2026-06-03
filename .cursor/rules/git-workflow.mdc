@@ -1,0 +1,104 @@
+---
+description: "Git 工作流规范：分支命名、提交信息格式、合并请求流程、标签管理。适用于所有 Git 操作。"
+globs:
+  - ".git/**"
+  - "**/.git/**"
+alwaysApply: false
+---
+
+# Git 工作流规范
+
+基于约定式提交（Conventional Commits）和 GitHub/GitLab 主流协作模式，确保版本历史的清晰与可读性。
+
+## 分支命名规范
+
+分支名称采用以下格式：
+
+- **type** 类型：`feature`、`fix`、`hotfix`、`release`、`chore`、`docs`。
+- **description**：使用短横线分隔的小写英文短语，简洁描述变更内容。
+
+示例：
+- `feature/user-authentication`
+- `fix/payment-crash`
+- `hotfix/security-patch-2.1`
+- `release/v2.0.0`
+
+### 分支生命周期
+
+| 分支类型 | 源分支 | 目标分支 | 生命周期 |
+|---------|--------|---------|---------|
+| `feature/*` | `develop` | `develop` | 功能开发完后删除 |
+| `fix/*` | `develop` | `develop` | 修复完成后删除 |
+| `hotfix/*` | `main` | `main` & `develop` | 紧急修复后删除 |
+| `release/*` | `develop` | `main` & `develop` | 发布后删除 |
+
+## 提交信息格式
+
+使用**约定式提交 1.0.0** 规范。
+
+### type 类型（必须）
+
+| 类型 | 说明 | 是否触发版本发布 |
+|------|------|----------------|
+| `feat` | 新功能 | ✅ 是（minor） |
+| `fix` | Bug 修复 | ✅ 是（patch） |
+| `docs` | 仅文档变更 | ❌ 否 |
+| `style` | 代码格式（不影响逻辑） | ❌ 否 |
+| `refactor` | 重构（非新功能、非修复） | ❌ 否 |
+| `perf` | 性能优化 | ✅ 是（patch） |
+| `test` | 测试相关 | ❌ 否 |
+| `chore` | 构建/工具/依赖变更 | ❌ 否 |
+| `revert` | 回滚提交 | ❌ 否 |
+
+### scope（可选）
+
+受影响的模块或组件，如 `auth`、`ui`、`api`、`hooks`、`utils`。
+
+### subject（必须）
+
+- 使用英文，祈使句，首字母小写
+- 结尾不加句号
+- 长度不超过 50 字符
+
+示例：
+### footer（可选）
+
+- 关闭 Issue：`Closes #123, #456`
+- 破坏性变更：`BREAKING CHANGE: description`
+- 其他元数据：`Reviewed-by: name`
+
+### 完整示例
+
+## 提交粒度
+
+- **单一职责**：每次提交应是逻辑上独立的变更。
+- **避免大提交**：单个提交不超过 400 行变更（文档/自动生成除外）。
+- **测试必须通过**：提交前运行 `npm run lint` 和 `npm run test`。
+- **不要混合**：不要将格式修复与功能变更混合提交。
+
+## 合并请求（Pull Request / Merge Request）
+
+### PR 标题
+
+必须遵循提交信息格式：
+### PR 描述模板
+
+```markdown
+## 变更类型
+- [ ] 新功能
+- [ ] Bug 修复
+- [ ] 重构
+- [ ] 文档
+
+## 变更内容
+- 简明描述变更…
+
+## 测试
+- [ ] 单元测试已添加/更新
+- [ ] 手动测试通过
+
+## 关联 Issue
+Closes #(issue number)
+
+## 截图（如适用）
+（粘贴截图链接）

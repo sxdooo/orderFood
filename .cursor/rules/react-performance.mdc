@@ -1,0 +1,32 @@
+---
+description: "React 性能优化专项规范：包含渲染优化、代码分割、虚拟化列表、避免不必要的重渲染等。"
+globs:
+  - "src/**/*.{tsx,ts}"
+alwaysApply: false
+---
+
+# React 性能优化准则
+
+针对 React 应用的性能关键部分，必须遵循以下高级指南。
+
+## 避免不必要的重渲染
+
+- 使用 `React.memo` 包装**纯展示组件**，尤其是接收对象或函数作为 Props 的组件。
+- 传递给 memo 组件的 Props 必须是**稳定引用**：使用 `useCallback` 包装函数，`useMemo` 包装对象。
+- 使用 `useReducer` 管理复杂局部状态，避免多层 `useState` 导致连锁重渲染。
+
+## 代码分割 & 懒加载
+
+- 路由级别必须使用 `React.lazy` 配合 `Suspense` 实现代码分割。
+- 大型第三方组件（如富文本编辑器、图表库）采用动态导入，仅在需要时加载。
+
+```typescript
+const LazyChart = lazy(() => import('./ExpensiveChart'));
+
+function Dashboard() {
+  return (
+    <Suspense fallback={<Spinner />}>
+      <LazyChart />
+    </Suspense>
+  );
+}

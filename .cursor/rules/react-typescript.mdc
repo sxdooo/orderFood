@@ -1,0 +1,33 @@
+---
+description: "TypeScript 编码规范：类型定义、泛型、strict 模式配置、避免 any 等。适用于所有 TypeScript 文件。"
+globs:
+  - "src/**/*.{ts,tsx}"
+alwaysApply: false
+---
+
+# TypeScript 规范
+
+TypeScript 编写约定，确保类型安全与可维护性。
+
+## 严格模式
+
+- `tsconfig.json` 必须启用 `strict: true`，包括 `noImplicitAny`、`strictNullChecks`、`strictFunctionTypes`、`strictBindCallApply`、`strictPropertyInitialization` 等所有严格相关选项。
+
+## 类型与接口
+
+- 使用 `interface` 定义对象的形状，使用 `type` 定义联合类型、元组或函数签名。
+- 优先使用 `interface`，因为 `interface` 可以声明合并且性能更好（缓存）。
+
+```typescript
+// ✅ 好 - 对象形状用 interface
+interface User {
+  id: number;
+  name: string;
+}
+
+// ✅ 好 - 联合类型或复杂类型用 type
+type ID = string | number;
+type Result<T> = { data: T; error?: string };
+
+// ❌ 坏 - 对象形状使用 type 且无合并需求
+type User = { id: number; name: string };

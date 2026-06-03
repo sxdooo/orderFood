@@ -1,0 +1,13 @@
+---
+description: React 组件规范
+globs: ["src/**/*.tsx"]
+alwaysApply: false
+---
+# 组件开发标准
+- 写法：必须使用函数式组件 + Hooks，禁止类组件。
+- 顺序：严格按照以下顺序组织代码：
+  1. imports
+  2. 类型定义 (Props/State)
+  3. 组件内部状态 (useState)
+  4. 副作用 (useEffect)
+  5. 渲染逻辑 (return)

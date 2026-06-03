@@ -1,0 +1,322 @@
+.menu-page {
+  padding-bottom: 160px;
+}
+
+// ─── Cutoff banner ───────────────────────────────────────────
+.cutoff-bar {
+  background: #fffbe6;
+  border: 1px solid #ffe58f;
+  color: #d46b08;
+  padding: 16px 24px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  font-size: 26px;
+  text-align: center;
+
+  &.closed {
+    background: #f5f5f5;
+    border-color: #e0e0e0;
+    color: #999;
+  }
+}
+
+// ─── Dish card ───────────────────────────────────────────────
+.dish-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+
+  .dish-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .dish-name {
+    font-size: 30px;
+    font-weight: 600;
+    color: #1a1a1a;
+    display: block;
+    margin-bottom: 6px;
+  }
+
+  .dish-desc {
+    font-size: 24px;
+    color: #999;
+    display: block;
+    margin-bottom: 10px;
+  }
+
+  .dish-price {
+    font-size: 32px;
+    font-weight: 600;
+    color: #ff6b35;
+  }
+}
+
+// ─── Add / Qty controls ──────────────────────────────────────
+.add-btn {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: #07c160;
+  color: #fff;
+  font-size: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  &.disabled {
+    background: #ccc;
+  }
+}
+
+.qty-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.qty-btn {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  font-weight: 600;
+
+  &.minus {
+    border: 2rpx solid #07c160;
+    color: #07c160;
+  }
+
+  &.plus {
+    background: #07c160;
+    color: #fff;
+  }
+}
+
+.qty-num {
+  font-size: 30px;
+  font-weight: 600;
+  min-width: 32px;
+  text-align: center;
+  color: #1a1a1a;
+}
+
+// ─── Cart bar (fixed bottom) ─────────────────────────────────
+.cart-bar {
+  position: fixed;
+  left: 24px;
+  right: 24px;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 110px);
+  background: #1a1a1a;
+  border-radius: 52px;
+  height: 96px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px 0 16px;
+  z-index: 100;
+
+  .cart-bar-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .cart-badge {
+    width: 52px;
+    height: 52px;
+    background: #07c160;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    font-weight: 700;
+    color: #fff;
+  }
+
+  .cart-bar-total {
+    font-size: 32px;
+    font-weight: 600;
+    color: #fff;
+  }
+
+  .cart-bar-right {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: #fff;
+    font-size: 28px;
+    background: #07c160;
+    padding: 0 24px;
+    height: 72px;
+    border-radius: 40px;
+  }
+
+  .cart-chevron {
+    font-size: 32px;
+  }
+}
+
+// ─── Cart overlay & panel ────────────────────────────────────
+.cart-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 200;
+}
+
+.cart-panel {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #fff;
+  border-radius: 28px 28px 0 0;
+  z-index: 201;
+  padding: 24px 28px;
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 24px);
+  max-height: 70vh;
+  display: flex;
+  flex-direction: column;
+
+  .cart-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+
+    .cart-panel-title {
+      font-size: 32px;
+      font-weight: 700;
+    }
+
+    .cart-panel-close {
+      font-size: 32px;
+      color: #999;
+      padding: 8px;
+    }
+  }
+
+  .cart-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 0;
+    border-bottom: 1px solid #f0f0f0;
+
+    &:last-of-type { border-bottom: none; }
+
+    .cart-item-name {
+      flex: 1;
+      font-size: 28px;
+      color: #1a1a1a;
+    }
+
+    .cart-item-subtotal {
+      font-size: 28px;
+      font-weight: 600;
+      color: #ff6b35;
+      min-width: 100px;
+      text-align: right;
+    }
+  }
+
+  .cart-panel-footer {
+    margin-top: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 16px;
+    border-top: 1px solid #f0f0f0;
+
+    .cart-total-text {
+      font-size: 26px;
+      color: #666;
+    }
+
+    .cart-total-price {
+      font-size: 32px;
+      font-weight: 700;
+      color: #ff6b35;
+    }
+
+    .checkout-btn {
+      width: 220px;
+      height: 72px !important;
+      line-height: 72px !important;
+      font-size: 28px !important;
+    }
+  }
+}
+
+// ─── Seller Hub ───────────────────────────────────────────────
+.seller-hub {
+  .hub-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    .hub-title {
+      font-size: 36px;
+      font-weight: 700;
+      color: #1a1a1a;
+    }
+
+    .hub-date {
+      font-size: 24px;
+      color: #999;
+    }
+  }
+
+  .hub-actions { /* stacked */ }
+
+  .hub-action-card {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+
+    .hub-action-icon {
+      width: 80px;
+      height: 80px;
+      border-radius: 20px;
+      flex-shrink: 0;
+
+      &.menu-icon { background: #e8f7f0; }
+      &.order-icon { background: #e6f4ff; }
+    }
+
+    .hub-action-body {
+      flex: 1;
+
+      .hub-action-title {
+        display: block;
+        font-size: 30px;
+        font-weight: 600;
+        color: #1a1a1a;
+        margin-bottom: 6px;
+      }
+
+      .hub-action-desc {
+        display: block;
+        font-size: 24px;
+        color: #999;
+      }
+    }
+
+    .hub-chevron {
+      font-size: 40px;
+      color: #ccc;
+    }
+  }
+}

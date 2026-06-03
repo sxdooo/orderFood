@@ -1,0 +1,23 @@
+.map {
+  width: 100%;
+  height: 400px;
+  margin-bottom: 16px;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.amount {
+  color: #e64340;
+  text-align: right;
+  margin-top: 8px;
+}
+
+.refund-btn {
+  margin-top: 12px;
+  color: #e64340;
+}

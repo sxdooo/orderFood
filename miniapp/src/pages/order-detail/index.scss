@@ -1,0 +1,42 @@
+.detail-page {
+  .status {
+    font-size: 36px;
+    font-weight: 600;
+    margin-bottom: 12px;
+  }
+
+  .amount {
+    margin-top: 12px;
+    color: #e64340;
+    text-align: right;
+  }
+
+  .chat {
+    .msg-list {
+      height: 360px;
+    }
+
+    .msg {
+      padding: 12px;
+      margin-bottom: 8px;
+      border-radius: 8px;
+      max-width: 80%;
+    }
+
+    .msg-buyer {
+      background: #95ec69;
+      margin-left: auto;
+    }
+
+    .msg-seller {
+      background: #fff;
+      border: 1px solid #eee;
+    }
+
+    .msg-input {
+      display: flex;
+      gap: 12px;
+      margin-top: 12px;
+    }
+  }
+}
