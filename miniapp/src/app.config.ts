@@ -7,6 +7,8 @@ export default defineAppConfig({
     'pages/checkout/index',
     'pages/orders/index',
     'pages/order-detail/index',
+    'pages/chat/index',
+    'pages/messages/index',
     'pages/mine/index',
     'pages/seller/menus/index',
     'pages/seller/orders/index',
@@ -25,6 +27,7 @@ export default defineAppConfig({
     list: [
       { pagePath: 'pages/menu/index', text: '订餐' },
       { pagePath: 'pages/orders/index', text: '订单' },
+      { pagePath: 'pages/messages/index', text: '消息' },
       { pagePath: 'pages/mine/index', text: '我的' }
     ]
   },

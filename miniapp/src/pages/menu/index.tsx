@@ -5,6 +5,7 @@ import { request } from '../../utils/request'
 import { CartItem, getCart, setCart, cartTotal } from '../../utils/cart'
 import { getUser } from '../../utils/auth'
 import { formatPrice } from '../../utils/format'
+import { refreshMessageBadge } from '../../utils/message'
 import './index.scss'
 
 interface MenuItem {
@@ -91,6 +92,7 @@ export default function MenuPage() {
   useDidShow(() => {
     Taro.setNavigationBarTitle({ title: isSeller ? '工作台' : '明日菜单' })
     load()
+    refreshMessageBadge()
   })
 
   if (isSeller) return <SellerHub />

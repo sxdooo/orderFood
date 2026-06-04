@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/google/uuid"
@@ -12,6 +13,7 @@ import (
 	"github.com/orderfood/server/internal/pkg/amap"
 	"github.com/orderfood/server/internal/pkg/timeutil"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 var ErrOrderingClosed = errors.New("ordering is closed")
@@ -331,6 +333,269 @@ func estimateDistance(stops []RouteStop) int {
 	return int(km * 1000)
 }
 
+// DriverRoute is one delivery driver's ordered list of stops.
+type DriverRoute struct {
+	DriverIndex   int         `json:"driverIndex"`
+	Color         string      `json:"color"`
+	Stops         []RouteStop `json:"stops"`
+	TotalDistance int         `json:"totalDistance"`
+}
+
+// ClusterResult is the full per-driver clustering for a delivery date.
+type ClusterResult struct {
+	DeliveryDate time.Time     `json:"deliveryDate"`
+	DriverCount  int           `json:"driverCount"`
+	SellerLat    float64       `json:"sellerLat"`
+	SellerLng    float64       `json:"sellerLng"`
+	Drivers      []DriverRoute `json:"drivers"`
+}
+
+// routeColors are cycled across drivers for map rendering.
+var routeColors = []string{
+	"#07c160", "#1989fa", "#ff976a", "#ee0a24",
+	"#7232dd", "#ff5722", "#00b578", "#fa8c16",
+}
+
+func (s *RouteService) sellerLatLng(ctx context.Context, sellerID uint64) (float64, float64) {
+	var p model.SellerProfile
+	s.db.WithContext(ctx).Where("user_id = ?", sellerID).First(&p)
+	return p.AddressLat, p.AddressLng
+}
+
+// Cluster groups the date's deliverable orders into driverCount balanced clusters
+// (capacity-constrained k-means), nearest-neighbor sorts each cluster starting from
+// the stop closest to the shop, persists the result, and returns it.
+func (s *RouteService) Cluster(ctx context.Context, sellerID uint64, deliveryDate string, driverCount int) (*ClusterResult, error) {
+	orders, err := s.order.ListSellerByDate(ctx, deliveryDate)
+	if err != nil {
+		return nil, err
+	}
+	var stops []RouteStop
+	for _, o := range orders {
+		if o.Status == model.OrderRefunded || o.Status == model.OrderCancelled {
+			continue
+		}
+		if o.AddressLat == nil || o.AddressLng == nil {
+			continue
+		}
+		stops = append(stops, RouteStop{
+			OrderID: o.ID, ContactName: o.ContactName, Address: o.Address,
+			Phone: o.ContactPhone, Lat: *o.AddressLat, Lng: *o.AddressLng,
+		})
+	}
+
+	sellerLat, sellerLng := s.sellerLatLng(ctx, sellerID)
+
+	k := driverCount
+	if k < 1 {
+		k = 1
+	}
+	if k > len(stops) {
+		k = len(stops)
+	}
+
+	var drivers []DriverRoute
+	if k > 0 {
+		labels := balancedKMeans(stops, k)
+		buckets := make([][]RouteStop, k)
+		for i, lbl := range labels {
+			buckets[lbl] = append(buckets[lbl], stops[i])
+		}
+		for ci, bucket := range buckets {
+			sorted := nearestNeighborFrom(bucket, sellerLat, sellerLng)
+			drivers = append(drivers, DriverRoute{
+				DriverIndex:   ci,
+				Color:         routeColors[ci%len(routeColors)],
+				Stops:         sorted,
+				TotalDistance: estimateDistance(sorted),
+			})
+		}
+	}
+
+	clustersRaw, _ := json.Marshal(drivers)
+	// Keep StopsJSON as a flattened ordering for backward compatibility.
+	var flat []RouteStop
+	for _, d := range drivers {
+		flat = append(flat, d.Stops...)
+	}
+	flatRaw, _ := json.Marshal(flat)
+	d, err := timeutil.ParseDate(deliveryDate)
+	if err != nil {
+		return nil, err
+	}
+	route := model.DeliveryRoute{
+		SellerID: sellerID, DeliveryDate: d,
+		StopsJSON:     string(flatRaw),
+		DriverCount:   driverCount,
+		ClustersJSON:  string(clustersRaw),
+		TotalDistance: estimateDistance(flat),
+		UpdatedAt:     time.Now(),
+	}
+	if err := s.db.WithContext(ctx).Where("seller_id = ? AND delivery_date = ?", sellerID, d).Assign(route).FirstOrCreate(&route).Error; err != nil {
+		return nil, err
+	}
+	return &ClusterResult{
+		DeliveryDate: d, DriverCount: driverCount,
+		SellerLat: sellerLat, SellerLng: sellerLng, Drivers: drivers,
+	}, nil
+}
+
+// GetClusters reads back a previously computed clustering for the date.
+func (s *RouteService) GetClusters(ctx context.Context, sellerID uint64, deliveryDate string) (*ClusterResult, error) {
+	d, err := timeutil.ParseDate(deliveryDate)
+	if err != nil {
+		return nil, err
+	}
+	var route model.DeliveryRoute
+	if err := s.db.WithContext(ctx).Where("seller_id = ? AND delivery_date = ?", sellerID, d).First(&route).Error; err != nil {
+		return nil, err
+	}
+	var drivers []DriverRoute
+	if route.ClustersJSON != "" {
+		_ = json.Unmarshal([]byte(route.ClustersJSON), &drivers)
+	}
+	sellerLat, sellerLng := s.sellerLatLng(ctx, sellerID)
+	return &ClusterResult{
+		DeliveryDate: route.DeliveryDate, DriverCount: route.DriverCount,
+		SellerLat: sellerLat, SellerLng: sellerLng, Drivers: drivers,
+	}, nil
+}
+
+// nearestNeighborFrom orders stops greedily, starting from the stop nearest the origin.
+func nearestNeighborFrom(stops []RouteStop, originLat, originLng float64) []RouteStop {
+	if len(stops) <= 1 {
+		return stops
+	}
+	remaining := append([]RouteStop{}, stops...)
+	// Seed with the stop closest to the origin (shop).
+	seed := 0
+	seedD := 1e18
+	for i, s := range remaining {
+		d := amap.HaversineDistanceKm(originLat, originLng, s.Lat, s.Lng)
+		if d < seedD {
+			seedD = d
+			seed = i
+		}
+	}
+	current := remaining[seed]
+	result := []RouteStop{current}
+	remaining = append(remaining[:seed], remaining[seed+1:]...)
+	for len(remaining) > 0 {
+		best := 0
+		bestD := 1e18
+		for i, s := range remaining {
+			d := amap.HaversineDistanceKm(current.Lat, current.Lng, s.Lat, s.Lng)
+			if d < bestD {
+				bestD = d
+				best = i
+			}
+		}
+		current = remaining[best]
+		result = append(result, current)
+		remaining = append(remaining[:best], remaining[best+1:]...)
+	}
+	return result
+}
+
+type centroid struct{ lat, lng float64 }
+
+// balancedKMeans assigns each stop to one of k clusters of near-equal size
+// (capacity = ceil(n/k)) using deterministic farthest-point seeding and a
+// greedy capacity-constrained assignment. Returns the cluster label per stop.
+func balancedKMeans(stops []RouteStop, k int) []int {
+	n := len(stops)
+	labels := make([]int, n)
+	if k <= 1 || n == 0 {
+		return labels
+	}
+
+	capacity := (n + k - 1) / k // ceil(n/k)
+
+	// Farthest-point seeding for spread-out, deterministic initial centroids.
+	centroids := make([]centroid, k)
+	centroids[0] = centroid{stops[0].Lat, stops[0].Lng}
+	for j := 1; j < k; j++ {
+		far := 0
+		farD := -1.0
+		for i, s := range stops {
+			minD := 1e18
+			for c := 0; c < j; c++ {
+				d := amap.HaversineDistanceKm(s.Lat, s.Lng, centroids[c].lat, centroids[c].lng)
+				if d < minD {
+					minD = d
+				}
+			}
+			if minD > farD {
+				farD = minD
+				far = i
+			}
+		}
+		centroids[j] = centroid{stops[far].Lat, stops[far].Lng}
+	}
+
+	for iter := 0; iter < 12; iter++ {
+		// Greedy capacity-constrained assignment: assign closest pairs first.
+		type pair struct {
+			d          float64
+			stop, clus int
+		}
+		pairs := make([]pair, 0, n*k)
+		for i, s := range stops {
+			for c := 0; c < k; c++ {
+				pairs = append(pairs, pair{
+					d:    amap.HaversineDistanceKm(s.Lat, s.Lng, centroids[c].lat, centroids[c].lng),
+					stop: i, clus: c,
+				})
+			}
+		}
+		sort.Slice(pairs, func(a, b int) bool { return pairs[a].d < pairs[b].d })
+
+		assigned := make([]bool, n)
+		counts := make([]int, k)
+		filled := 0
+		newLabels := make([]int, n)
+		for _, p := range pairs {
+			if filled == n {
+				break
+			}
+			if assigned[p.stop] || counts[p.clus] >= capacity {
+				continue
+			}
+			newLabels[p.stop] = p.clus
+			assigned[p.stop] = true
+			counts[p.clus]++
+			filled++
+		}
+
+		// Recompute centroids from the new assignment.
+		sumLat := make([]float64, k)
+		sumLng := make([]float64, k)
+		cnt := make([]int, k)
+		for i, lbl := range newLabels {
+			sumLat[lbl] += stops[i].Lat
+			sumLng[lbl] += stops[i].Lng
+			cnt[lbl]++
+		}
+		changed := false
+		for c := 0; c < k; c++ {
+			if cnt[c] == 0 {
+				continue
+			}
+			centroids[c] = centroid{sumLat[c] / float64(cnt[c]), sumLng[c] / float64(cnt[c])}
+		}
+		for i := range labels {
+			if labels[i] != newLabels[i] {
+				changed = true
+			}
+			labels[i] = newLabels[i]
+		}
+		if !changed && iter > 0 {
+			break
+		}
+	}
+	return labels
+}
+
 type ChatService struct {
 	db    *gorm.DB
 	redis RedisClient
@@ -370,4 +635,120 @@ func (s *ChatService) CanAccess(ctx context.Context, orderID, userID uint64, rol
 		return true, nil
 	}
 	return order.BuyerID == userID, nil
+}
+
+// ConversationSummary is one entry in a user's message list.
+type ConversationSummary struct {
+	OrderID     uint64    `json:"orderId"`
+	OrderNo     string    `json:"orderNo"`
+	OrderStatus string    `json:"orderStatus"`
+	PeerName    string    `json:"peerName"`
+	LastContent string    `json:"lastContent"`
+	LastAt      time.Time `json:"lastAt"`
+	Unread      int64     `json:"unread"`
+}
+
+// accessibleOrderIDs returns the order ids (with at least one message) the user
+// is allowed to see. Seller sees every conversation; buyer sees only their own.
+func (s *ChatService) accessibleOrderIDs(ctx context.Context, userID uint64, role model.UserRole) ([]uint64, error) {
+	db := s.db.WithContext(ctx)
+	q := db.Model(&model.OrderMessage{}).Distinct("order_id")
+	if role != model.RoleSeller {
+		q = q.Where("order_id IN (?)",
+			db.Model(&model.Order{}).Select("id").Where("buyer_id = ?", userID))
+	}
+	var ids []uint64
+	err := q.Pluck("order_id", &ids).Error
+	return ids, err
+}
+
+// Conversations builds the message list for a user, newest activity first.
+func (s *ChatService) Conversations(ctx context.Context, userID uint64, role model.UserRole) ([]ConversationSummary, error) {
+	db := s.db.WithContext(ctx)
+	ids, err := s.accessibleOrderIDs(ctx, userID, role)
+	if err != nil {
+		return nil, err
+	}
+	if len(ids) == 0 {
+		return []ConversationSummary{}, nil
+	}
+
+	var orders []model.Order
+	if err := db.Where("id IN ?", ids).Find(&orders).Error; err != nil {
+		return nil, err
+	}
+	orderMap := make(map[uint64]model.Order, len(orders))
+	for _, o := range orders {
+		orderMap[o.ID] = o
+	}
+
+	markerMap := make(map[uint64]time.Time)
+	var markers []model.OrderReadMarker
+	if err := db.Where("user_id = ? AND order_id IN ?", userID, ids).Find(&markers).Error; err == nil {
+		for _, m := range markers {
+			markerMap[m.OrderID] = m.LastReadAt
+		}
+	}
+
+	result := make([]ConversationSummary, 0, len(ids))
+	for _, oid := range ids {
+		var last model.OrderMessage
+		if err := db.Where("order_id = ?", oid).Order("created_at desc").First(&last).Error; err != nil {
+			continue
+		}
+		unreadQ := db.Model(&model.OrderMessage{}).Where("order_id = ? AND sender_id <> ?", oid, userID)
+		if lastRead, ok := markerMap[oid]; ok {
+			unreadQ = unreadQ.Where("created_at > ?", lastRead)
+		}
+		var unread int64
+		unreadQ.Count(&unread)
+
+		o := orderMap[oid]
+		peer := "店铺"
+		if role == model.RoleSeller {
+			peer = o.ContactName
+		}
+		result = append(result, ConversationSummary{
+			OrderID:     oid,
+			OrderNo:     o.OrderNo,
+			OrderStatus: string(o.Status),
+			PeerName:    peer,
+			LastContent: last.Content,
+			LastAt:      last.CreatedAt,
+			Unread:      unread,
+		})
+	}
+
+	sort.Slice(result, func(i, j int) bool {
+		return result[i].LastAt.After(result[j].LastAt)
+	})
+	return result, nil
+}
+
+// UnreadCount returns the total number of unread messages across all of the
+// user's conversations (drives the message tab badge).
+func (s *ChatService) UnreadCount(ctx context.Context, userID uint64, role model.UserRole) (int64, error) {
+	db := s.db.WithContext(ctx)
+	q := db.Table("order_messages AS m").
+		Joins("LEFT JOIN order_read_markers AS r ON r.order_id = m.order_id AND r.user_id = ?", userID).
+		Where("m.sender_id <> ?", userID).
+		Where("r.last_read_at IS NULL OR m.created_at > r.last_read_at")
+	if role != model.RoleSeller {
+		q = q.Where("m.order_id IN (?)",
+			db.Model(&model.Order{}).Select("id").Where("buyer_id = ?", userID))
+	}
+	var cnt int64
+	err := q.Count(&cnt).Error
+	return cnt, err
+}
+
+// MarkRead upserts the user's read marker for an order to now.
+func (s *ChatService) MarkRead(ctx context.Context, orderID, userID uint64) error {
+	now := time.Now()
+	marker := model.OrderReadMarker{OrderID: orderID, UserID: userID, LastReadAt: now, UpdatedAt: now}
+	return s.db.WithContext(ctx).
+		Clauses(clause.OnConflict{
+			Columns:   []clause.Column{{Name: "order_id"}, {Name: "user_id"}},
+			DoUpdates: clause.AssignmentColumns([]string{"last_read_at", "updated_at"}),
+		}).Create(&marker).Error
 }

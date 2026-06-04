@@ -3,6 +3,7 @@ import Taro, { useDidShow } from '@tarojs/taro'
 import { useState } from 'react'
 import { request } from '../../utils/request'
 import { clearAuth, setUser } from '../../utils/auth'
+import { refreshMessageBadge } from '../../utils/message'
 import './index.scss'
 
 interface BuyerProfile {
@@ -52,6 +53,7 @@ export default function MinePage() {
   useDidShow(() => {
     Taro.setNavigationBarTitle({ title: '我的' })
     load()
+    refreshMessageBadge()
   })
 
   const handleSave = async () => {

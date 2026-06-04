@@ -1,23 +1,161 @@
-.map {
-  width: 100%;
-  height: 400px;
-  margin-bottom: 16px;
+.detail-page {
+  padding-bottom: 60px;
 }
 
-.actions {
+.loading-text {
+  display: block;
+  text-align: center;
+  padding-top: 80px;
+  color: #999;
+}
+
+// ─── Buyer card ──────────────────────────────────────────────
+.buyer-card {
+  .buyer-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+  }
+
+  .buyer-name {
+    display: block;
+    font-size: 32px;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: 6px;
+  }
+
+  .buyer-phone {
+    display: block;
+    font-size: 26px;
+    color: #888;
+  }
+
+  .buyer-addr {
+    display: block;
+    font-size: 26px;
+    color: #555;
+    line-height: 1.6;
+    margin-bottom: 8px;
+  }
+
+  .buyer-distance {
+    display: block;
+    font-size: 24px;
+    color: #07c160;
+    font-weight: 500;
+  }
+}
+
+// ─── Map + nav ───────────────────────────────────────────────
+.map-section {
+  position: relative;
+  margin-bottom: 20px;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+
+  .map {
+    width: 100%;
+    height: 420px;
+    display: block;
+  }
+
+  .nav-btn {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    background: #07c160 !important;
+    color: #fff !important;
+    border: none !important;
+    border-radius: 40px !important;
+    height: 72px !important;
+    line-height: 72px !important;
+    padding: 0 28px !important;
+    font-size: 28px !important;
+    font-weight: 500 !important;
+    box-shadow: 0 4px 16px rgba(7, 193, 96, 0.4);
+    &::after { border: none !important; }
+  }
+}
+
+// ─── Items ───────────────────────────────────────────────────
+.item-row {
   display: flex;
+  align-items: center;
+  padding: 14px 0;
+  border-bottom: 1px solid #f5f5f7;
+
+  &:last-of-type { border-bottom: none; }
+
+  .item-name { flex: 1; font-size: 28px; color: #1a1a1a; }
+  .item-qty  { font-size: 26px; color: #999; margin: 0 20px; }
+  .item-price { font-size: 28px; font-weight: 600; color: #ff6b35; }
+}
+
+.total-row {
+  display: flex;
+  justify-content: space-between;
+  padding-top: 16px;
+  margin-top: 4px;
+  border-top: 1px solid #ebebeb;
+
+  .total-label  { font-size: 28px; color: #555; }
+  .total-amount { font-size: 34px; font-weight: 700; color: #ff6b35; }
+}
+
+// ─── Action bar ──────────────────────────────────────────────
+.action-bar {
+  display: flex;
+  gap: 16px;
   flex-wrap: wrap;
-  gap: 12px;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
+
+  .action-btn {
+    flex: 1;
+    min-width: 180px;
+    height: 80px !important;
+    line-height: 80px !important;
+    font-size: 28px !important;
+    border-radius: 40px !important;
+  }
+
+  .action-btn-chat {
+    flex: 1;
+    min-width: 180px;
+    height: 80px;
+    line-height: 80px;
+    font-size: 28px;
+    border-radius: 40px;
+    background: #fff;
+    color: #1677ff;
+    border: 2rpx solid #1677ff;
+    &::after { border: none; }
+  }
+
+  .action-btn-refund {
+    flex: 1;
+    min-width: 120px;
+    height: 80px;
+    line-height: 80px;
+    font-size: 28px;
+    border-radius: 40px;
+    background: #fff;
+    color: #ff4d4f;
+    border: 2rpx solid #ffccc7;
+    &::after { border: none; }
+  }
 }
 
-.amount {
-  color: #e64340;
-  text-align: right;
-  margin-top: 8px;
-}
-
-.refund-btn {
-  margin-top: 12px;
-  color: #e64340;
+// ─── Refund panel ────────────────────────────────────────────
+.refund-panel {
+  .refund-input {
+    height: 80px;
+    background: #f5f5f7;
+    border-radius: 12px;
+    padding: 0 20px;
+    font-size: 28px;
+    margin-bottom: 20px;
+  }
 }

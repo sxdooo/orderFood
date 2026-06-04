@@ -28,12 +28,15 @@ func main() {
 		log.Fatalf("load config: %v", err)
 	}
 
+	// In production, quiet down: release HTTP mode + warn-only SQL logging.
+	gormLogLevel := logger.Info
 	if cfg.Env == "production" {
 		gin.SetMode(gin.ReleaseMode)
+		gormLogLevel = logger.Warn
 	}
 
 	db, err := gorm.Open(mysql.Open(cfg.MySQLDSN), &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Info),
+		Logger: logger.Default.LogMode(gormLogLevel),
 	})
 	if err != nil {
 		log.Fatalf("connect mysql: %v", err)
@@ -67,7 +70,7 @@ func main() {
 	cutoffHandler := handler.NewCutoffHandler(cutoffSvc)
 	orderHandler := handler.NewOrderHandler(orderSvc)
 	sellerOrderHandler := handler.NewSellerOrderHandler(orderSvc, sellerRoleSvc)
-	routeHandler := handler.NewRouteHandler(routeSvc)
+	routeHandler := handler.NewRouteHandler(routeSvc, amapClient)
 	chatHandler := handler.NewChatHandler(chatSvc)
 	sellerProfileHandler := handler.NewSellerProfileHandler(sellerRoleSvc)
 
@@ -97,6 +100,8 @@ func main() {
 			authRequired.POST("/orders/:id/cancel", orderHandler.Cancel)
 			authRequired.GET("/orders/:id/messages", chatHandler.List)
 			authRequired.POST("/orders/:id/messages", chatHandler.Send)
+			authRequired.GET("/messages/conversations", chatHandler.Conversations)
+			authRequired.GET("/messages/unread-count", chatHandler.UnreadCount)
 
 			seller := authRequired.Group("/seller")
 			seller.Use(middleware.RequireRole(model.RoleSeller))
@@ -116,6 +121,9 @@ func main() {
 				seller.POST("/routes", routeHandler.Generate)
 				seller.GET("/routes", routeHandler.Get)
 				seller.PUT("/routes/stops", routeHandler.UpdateStops)
+				seller.POST("/routes/cluster", routeHandler.Cluster)
+				seller.GET("/routes/cluster", routeHandler.Clusters)
+				seller.POST("/routes/directions", routeHandler.Directions)
 			}
 		}
 	}

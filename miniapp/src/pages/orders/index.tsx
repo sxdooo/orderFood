@@ -3,6 +3,7 @@ import Taro, { useDidShow } from '@tarojs/taro'
 import { useState } from 'react'
 import { request } from '../../utils/request'
 import { getUser } from '../../utils/auth'
+import { refreshMessageBadge } from '../../utils/message'
 import { formatPrice, ORDER_STATUS_LABEL } from '../../utils/format'
 import './index.scss'
 
@@ -35,14 +36,19 @@ export default function OrdersPage() {
     Taro.setNavigationBarTitle({ title: seller ? '订单管理' : '我的订单' })
     try {
       if (seller) {
-        const today = new Date().toISOString().slice(0, 10)
-        const data = await request<Order[]>({ url: `/seller/orders?date=${today}` })
+        // Pre-order model: buyers order for next-day delivery, so the quick
+        // view defaults to tomorrow's orders (matches the full管理 page).
+        const d = new Date()
+        d.setDate(d.getDate() + 1)
+        const target = d.toISOString().slice(0, 10)
+        const data = await request<Order[]>({ url: `/seller/orders?date=${target}` })
         setOrders(data || [])
       } else {
         const data = await request<Order[]>({ url: '/orders' })
         setOrders(data || [])
       }
     } catch { /* ignore */ }
+    refreshMessageBadge()
   })
 
   const openDetail = (id: number) => {
@@ -56,7 +62,7 @@ export default function OrdersPage() {
     <View className='container orders-page'>
       {isSeller && (
         <View className='seller-tip'>
-          <Text>今日订单（点击进入详情）</Text>
+          <Text>明日订单（点击进入详情）</Text>
           <Text
             className='seller-tip-link'
             onClick={() => Taro.navigateTo({ url: '/pages/seller/orders/index' })}
@@ -66,7 +72,7 @@ export default function OrdersPage() {
         </View>
       )}
       {orders.length === 0 ? (
-        <View className='empty-tip'>{isSeller ? '今日暂无订单' : '暂无订单，快去订餐吧'}</View>
+        <View className='empty-tip'>{isSeller ? '明日暂无订单' : '暂无订单，快去订餐吧'}</View>
       ) : (
         orders.map((o) => (
           <View key={o.id} className='card order-card' onClick={() => openDetail(o.id)}>

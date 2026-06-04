@@ -177,14 +177,28 @@ type OrderMessage struct {
 	CreatedAt  time.Time   `gorm:"index" json:"createdAt"`
 }
 
+// OrderReadMarker records the last time a user read an order's chat,
+// used to compute per-user unread message counts.
+type OrderReadMarker struct {
+	ID         uint64    `gorm:"primaryKey" json:"id"`
+	OrderID    uint64    `gorm:"uniqueIndex:idx_order_user;not null" json:"orderId"`
+	UserID     uint64    `gorm:"uniqueIndex:idx_order_user;not null" json:"userId"`
+	LastReadAt time.Time `json:"lastReadAt"`
+	UpdatedAt  time.Time `json:"updatedAt"`
+}
+
 type DeliveryRoute struct {
 	ID           uint64    `gorm:"primaryKey" json:"id"`
 	SellerID     uint64    `gorm:"index;not null" json:"sellerId"`
 	DeliveryDate time.Time `gorm:"type:date;uniqueIndex;not null" json:"deliveryDate"`
 	StopsJSON    string    `gorm:"type:text;not null" json:"stopsJson"`
-	TotalDistance int      `gorm:"not null;default:0" json:"totalDistance"`
-	TotalDuration int      `gorm:"not null;default:0" json:"totalDuration"`
-	UpdatedAt    time.Time `json:"updatedAt"`
+	// DriverCount is the number of delivery drivers used for the last clustering.
+	DriverCount int `gorm:"not null;default:1" json:"driverCount"`
+	// ClustersJSON holds the per-driver routes ([]DriverRoute) as JSON.
+	ClustersJSON  string `gorm:"type:text" json:"clustersJson"`
+	TotalDistance int    `gorm:"not null;default:0" json:"totalDistance"`
+	TotalDuration int    `gorm:"not null;default:0" json:"totalDuration"`
+	UpdatedAt     time.Time `json:"updatedAt"`
 }
 
 func AutoMigrate(db *gorm.DB) error {
@@ -200,6 +214,7 @@ func AutoMigrate(db *gorm.DB) error {
 		&Payment{},
 		&CutoffSetting{},
 		&OrderMessage{},
+		&OrderReadMarker{},
 		&DeliveryRoute{},
 	)
 }

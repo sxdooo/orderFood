@@ -1,0 +1,145 @@
+.messages-page {
+  height: 100vh;
+  background: #f5f5f7;
+
+  .conv-list {
+    height: 100%;
+  }
+
+  .conv-item {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 24px;
+    background: #fff;
+    border-bottom: 1px solid #f0f0f0;
+
+    &:active {
+      background: #f7f7f7;
+    }
+  }
+
+  .avatar {
+    position: relative;
+    width: 88px;
+    height: 88px;
+    border-radius: 12px;
+    background: #07c160;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+
+    .avatar-text {
+      color: #fff;
+      font-size: 40px;
+      font-weight: 600;
+    }
+
+    .unread-dot {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      min-width: 32px;
+      height: 32px;
+      padding: 0 8px;
+      border-radius: 16px;
+      background: #fa5151;
+      border: 2px solid #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-sizing: border-box;
+
+      .unread-num {
+        color: #fff;
+        font-size: 20px;
+        font-weight: 600;
+        line-height: 1;
+      }
+    }
+  }
+
+  .conv-main {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .conv-row1 {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    .conv-name {
+      font-size: 30px;
+      font-weight: 600;
+      color: #1a1a1a;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 60%;
+    }
+
+    .conv-time {
+      font-size: 22px;
+      color: #999;
+      flex-shrink: 0;
+    }
+  }
+
+  .conv-row2 {
+    margin-top: 8px;
+
+    .conv-last {
+      font-size: 26px;
+      color: #888;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      display: block;
+    }
+  }
+
+  .conv-row3 {
+    margin-top: 10px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    .conv-order {
+      font-size: 22px;
+      color: #aaa;
+    }
+
+    .conv-status {
+      font-size: 22px;
+      color: #07c160;
+      background: rgba(7, 193, 96, 0.1);
+      padding: 2px 12px;
+      border-radius: 8px;
+    }
+  }
+
+  .empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 200px;
+
+    .empty-icon {
+      font-size: 80px;
+    }
+
+    .empty-text {
+      margin-top: 24px;
+      font-size: 30px;
+      color: #666;
+    }
+
+    .empty-sub {
+      margin-top: 12px;
+      font-size: 24px;
+      color: #aaa;
+    }
+  }
+}

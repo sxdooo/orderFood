@@ -1,4 +1,4 @@
-import { View, Input, Button, Picker, Text } from '@tarojs/components'
+import { View, Input, Button, Picker, Text, ScrollView } from '@tarojs/components'
 import Taro, { useDidShow } from '@tarojs/taro'
 import { useState } from 'react'
 import { request } from '../../../utils/request'
@@ -23,6 +23,13 @@ const getTomorrow = () => {
   return d.toISOString().slice(0, 10)
 }
 
+const STATUS_FILTERS: { key: string; label: string }[] = [
+  { key: 'all', label: '全部' },
+  { key: 'published', label: '已发布' },
+  { key: 'draft', label: '草稿' },
+  { key: 'expired', label: '已过期' },
+]
+
 export default function SellerMenusPage() {
   const [menus, setMenus] = useState<Menu[]>([])
   const [deliveryDate, setDeliveryDate] = useState(getTomorrow())
@@ -31,6 +38,7 @@ export default function SellerMenusPage() {
   const [dishDesc, setDishDesc] = useState('')
   const [items, setItems] = useState<MenuItem[]>([])
   const [creating, setCreating] = useState(false)
+  const [filterStatus, setFilterStatus] = useState('all')
 
   const load = async () => {
     try {
@@ -95,6 +103,10 @@ export default function SellerMenusPage() {
   const STATUS_LABEL: Record<string, string> = {
     draft: '草稿', published: '已发布', expired: '已过期'
   }
+
+  const filteredMenus = filterStatus === 'all'
+    ? menus
+    : menus.filter((m) => m.status === filterStatus)
 
   return (
     <View className='container menus-page'>
@@ -170,7 +182,27 @@ export default function SellerMenusPage() {
       {menus.length > 0 && (
         <>
           <View className='section-title'>已有菜单</View>
-          {menus.map((m) => (
+
+          {/* 状态筛选 Tab（通用小程序筛选交互） */}
+          <ScrollView scrollX className='filter-tabs' enableFlex>
+            {STATUS_FILTERS.map((f) => {
+              const cnt = f.key === 'all'
+                ? menus.length
+                : menus.filter((m) => m.status === f.key).length
+              return (
+                <View
+                  key={f.key}
+                  className={`filter-tab ${filterStatus === f.key ? 'active' : ''}`}
+                  onClick={() => setFilterStatus(f.key)}
+                >
+                  <Text>{f.label}</Text>
+                  {cnt > 0 && <Text className='filter-tab-cnt'>{cnt}</Text>}
+                </View>
+              )
+            })}
+          </ScrollView>
+
+          {filteredMenus.map((m) => (
             <View key={m.id} className='card menu-history-card'>
               <View className='row'>
                 <Text className='menu-date'>{String(m.deliveryDate).slice(0, 10)}</Text>
@@ -187,6 +219,10 @@ export default function SellerMenusPage() {
               </View>
             </View>
           ))}
+
+          {filteredMenus.length === 0 && (
+            <View className='empty-filter-hint'>该状态下暂无菜单</View>
+          )}
         </>
       )}
     </View>

@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/orderfood/server/internal/middleware"
 	"github.com/orderfood/server/internal/model"
+	"github.com/orderfood/server/internal/pkg/amap"
 	"github.com/orderfood/server/internal/pkg/response"
 	"github.com/orderfood/server/internal/service"
 )
@@ -269,10 +270,11 @@ func (h *SellerOrderHandler) Stats(c *gin.Context) {
 
 type RouteHandler struct {
 	route *service.RouteService
+	amap  *amap.Client
 }
 
-func NewRouteHandler(route *service.RouteService) *RouteHandler {
-	return &RouteHandler{route: route}
+func NewRouteHandler(route *service.RouteService, amapClient *amap.Client) *RouteHandler {
+	return &RouteHandler{route: route, amap: amapClient}
 }
 
 func (h *RouteHandler) Generate(c *gin.Context) {
@@ -321,6 +323,64 @@ func (h *RouteHandler) UpdateStops(c *gin.Context) {
 	response.OK(c, jsonRoute(route))
 }
 
+// Cluster groups the date's orders into driverCount balanced delivery routes.
+func (h *RouteHandler) Cluster(c *gin.Context) {
+	user := middleware.GetUser(c)
+	var req struct {
+		DeliveryDate string `json:"deliveryDate" binding:"required"`
+		DriverCount  int    `json:"driverCount" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, "invalid request")
+		return
+	}
+	if req.DriverCount < 1 {
+		response.BadRequest(c, "driverCount must be >= 1")
+		return
+	}
+	result, err := h.route.Cluster(c.Request.Context(), user.ID, req.DeliveryDate, req.DriverCount)
+	if err != nil {
+		response.InternalError(c, err.Error())
+		return
+	}
+	response.OK(c, result)
+}
+
+// Clusters returns the last computed clustering for the date.
+func (h *RouteHandler) Clusters(c *gin.Context) {
+	user := middleware.GetUser(c)
+	date := c.Query("deliveryDate")
+	result, err := h.route.GetClusters(c.Request.Context(), user.ID, date)
+	if err != nil {
+		response.NotFound(c, "route not found")
+		return
+	}
+	response.OK(c, result)
+}
+
+// Directions proxies Amap's driving (waypoint) API. waypoints is capped at 16.
+func (h *RouteHandler) Directions(c *gin.Context) {
+	var req struct {
+		Origin      amap.LatLng   `json:"origin"`
+		Destination amap.LatLng   `json:"destination"`
+		Waypoints   []amap.LatLng `json:"waypoints"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, "invalid request")
+		return
+	}
+	if len(req.Waypoints) > 16 {
+		response.BadRequest(c, "too many waypoints (max 16)")
+		return
+	}
+	result, err := h.amap.Driving(c.Request.Context(), req.Origin, req.Destination, req.Waypoints)
+	if err != nil {
+		response.InternalError(c, err.Error())
+		return
+	}
+	response.OK(c, result)
+}
+
 func jsonRoute(route *model.DeliveryRoute) gin.H {
 	var stops []service.RouteStop
 	_ = json.Unmarshal([]byte(route.StopsJSON), &stops)
@@ -354,7 +414,31 @@ func (h *ChatHandler) List(c *gin.Context) {
 		response.InternalError(c, err.Error())
 		return
 	}
+	// Opening / polling a conversation marks it as read for this user.
+	_ = h.chat.MarkRead(c.Request.Context(), orderID, user.ID)
 	response.OK(c, msgs)
+}
+
+// Conversations returns the user's message list (one entry per order with chat).
+func (h *ChatHandler) Conversations(c *gin.Context) {
+	user := middleware.GetUser(c)
+	list, err := h.chat.Conversations(c.Request.Context(), user.ID, user.Role)
+	if err != nil {
+		response.InternalError(c, err.Error())
+		return
+	}
+	response.OK(c, list)
+}
+
+// UnreadCount returns the total unread message count for the message tab badge.
+func (h *ChatHandler) UnreadCount(c *gin.Context) {
+	user := middleware.GetUser(c)
+	cnt, err := h.chat.UnreadCount(c.Request.Context(), user.ID, user.Role)
+	if err != nil {
+		response.InternalError(c, err.Error())
+		return
+	}
+	response.OK(c, gin.H{"count": cnt})
 }
 
 func (h *ChatHandler) Send(c *gin.Context) {

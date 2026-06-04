@@ -1,12 +1,223 @@
-.row {
-  display: flex;
-  gap: 12px;
-  margin: 12px 0;
-  align-items: center;
+.seller-orders-page {
+  padding-bottom: 60px;
 }
 
-.addr {
-  color: #666;
-  font-size: 24px;
-  margin: 4px 0;
+// ─── Toolbar ─────────────────────────────────────────────────
+.toolbar-card {
+  padding: 20px 24px;
+
+  .toolbar-row {
+    display: flex;
+    align-items: flex-end;   // align to bottom edge so picker & button share the same baseline
+    gap: 16px;
+    margin-bottom: 16px;
+
+    &:last-child { margin-bottom: 0; }
+  }
+
+  .toolbar-item {
+    flex: 1;
+
+    .toolbar-label {
+      font-size: 24px;
+      color: #999;
+      margin-bottom: 8px;
+      display: block;
+    }
+  }
+
+  .picker-val {
+    height: 72px;
+    background: #f5f5f7;
+    border-radius: 12px;
+    padding: 0 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 28px;
+    color: #1a1a1a;
+
+    &.small { height: 60px; font-size: 26px; }
+
+    .picker-arrow { color: #bbb; font-size: 32px; }
+  }
+
+  .route-btn {
+    flex-shrink: 0;
+    height: 72px !important;
+    line-height: 72px !important;
+    padding: 0 20px !important;
+    font-size: 26px !important;
+    border-radius: 36px !important;
+  }
+
+  .cutoff-row {
+    .toolbar-label { flex-shrink: 0; }
+    .cutoff-time-input { flex: 1; }
+  }
+
+  .cutoff-btn {
+    flex-shrink: 0;
+    height: 60px !important;
+    line-height: 60px !important;
+    padding: 0 20px !important;
+    font-size: 26px !important;
+    border-radius: 30px !important;
+  }
+}
+
+// ─── Summary ─────────────────────────────────────────────────
+.summary-card {
+  .summary-top {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+
+  .summary-main {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+
+    .summary-count {
+      font-size: 56px;
+      font-weight: 700;
+      color: #1a1a1a;
+      line-height: 1;
+    }
+
+    .summary-count-label {
+      font-size: 26px;
+      color: #999;
+    }
+  }
+
+  .summary-amount {
+    text-align: right;
+
+    .summary-amount-label {
+      display: block;
+      font-size: 22px;
+      color: #999;
+      margin-bottom: 4px;
+    }
+
+    .summary-amount-val {
+      font-size: 34px;
+      font-weight: 700;
+      color: #ff6b35;
+    }
+  }
+
+  .summary-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+
+    .summary-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 24px;
+      cursor: pointer;
+
+      .summary-badge-cnt {
+        font-weight: 700;
+        font-size: 22px;
+      }
+    }
+  }
+}
+
+// ─── Filter tabs ─────────────────────────────────────────────
+.filter-tabs {
+  display: flex;
+  white-space: nowrap;
+  padding: 0 24px 16px;
+  margin: 0 -24px;
+  box-sizing: border-box;
+  width: calc(100% + 48px);
+
+  .filter-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 20px;
+    margin-right: 12px;
+    border-radius: 24px;
+    font-size: 26px;
+    color: #666;
+    background: #f5f5f7;
+    flex-shrink: 0;
+    white-space: nowrap;
+
+    &.active {
+      background: #07c160;
+      color: #fff;
+    }
+
+    .filter-tab-cnt {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 28px;
+      height: 28px;
+      font-size: 20px;
+      font-weight: 600;
+      background: rgba(0, 0, 0, 0.1);
+      border-radius: 14px;
+      padding: 0 8px;
+      line-height: 1;
+    }
+
+    &.active .filter-tab-cnt {
+      background: rgba(255, 255, 255, 0.3);
+    }
+  }
+}
+
+// ─── Order card ──────────────────────────────────────────────
+.order-card {
+  .order-card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+
+  .order-buyer {
+    font-size: 30px;
+    font-weight: 600;
+    color: #1a1a1a;
+  }
+
+  .order-addr {
+    font-size: 24px;
+    color: #888;
+    display: block;
+    margin-bottom: 12px;
+    line-height: 1.5;
+  }
+
+  .order-card-foot {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 12px;
+    border-top: 1px solid #f5f5f5;
+  }
+
+  .order-phone {
+    font-size: 24px;
+    color: #aaa;
+  }
+
+  .order-amount {
+    font-size: 30px;
+    font-weight: 700;
+    color: #ff6b35;
+  }
 }
