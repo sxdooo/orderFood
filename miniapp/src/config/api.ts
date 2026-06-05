@@ -10,7 +10,9 @@
 //   详情 → 本地设置 → 不校验合法域名 + 不校验HTTPS证书.
 //
 // Switch by build mode: `taro build --type weapp` (prod) vs `--watch` (dev).
-const PROD_API_BASE_URL = 'https://your-domain.com/api/v1'
+// NOTE: callers pass paths without the /api/v1 prefix (e.g. request({ url: '/auth/wechat' })),
+// so the base URL MUST end with /api/v1.
+const PROD_API_BASE_URL = 'https://www.sxd.asia/orderfood/api/v1'
 const DEV_API_BASE_URL = 'http://192.168.1.9:8080/api/v1'
 
 export const API_BASE_URL =
