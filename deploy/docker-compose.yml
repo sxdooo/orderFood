@@ -54,9 +54,11 @@ services:
       REDIS_ADDR: redis:6379
       REDIS_PASSWORD: ${REDIS_PASSWORD:-orderfood}
       REDIS_DB: "0"
-    # Expose the API directly on the host so it is reachable at <host>:4000.
+    # Expose the API on the host. Container always listens on 4000 internally;
+    # the host port is configurable via API_PORT (deploy/.env) to avoid clashes
+    # with other services already bound to 4000.
     ports:
-      - "4000:4000"
+      - "${API_PORT:-4000}:4000"
     depends_on:
       mysql:
         condition: service_healthy
